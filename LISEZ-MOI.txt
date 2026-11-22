@@ -1,0 +1,15 @@
+SUNSET — VERSION PWA
+
+Contenu :
+- index.html : application Sunset
+- manifest.json : nom, icône et paramètres d’installation
+- sw.js : cache pour réouverture hors connexion
+- icons/ : icônes 192 et 512 px
+
+INSTALLATION :
+1. Hébergez TOUS les fichiers de ce dossier sur un hébergement HTTPS (par exemple GitHub Pages ou Netlify).
+2. Ouvrez l’adresse HTTPS de Sunset dans Chrome sur Android.
+3. Menu ⋮ > Installer l’application (ou Ajouter à l’écran d’accueil).
+4. Confirmez : l’icône et le nom Sunset seront utilisés.
+
+À SAVOIR : les fonctions nécessitant Internet (notamment l’assistant IA et les polices distantes) ne fonctionneront pas hors connexion. Le cœur de l’application et ses calculs locaux sont mis en cache.

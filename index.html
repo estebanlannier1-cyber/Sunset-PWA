@@ -1,0 +1,803 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#18051f"><meta name="description" content="Sunset — horaires du soleil, durée du jour et lumière."/><link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-512.png"><title>Sunset</title><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap">
+<style>
+/* Mise en page : un ciel vivant en tête de page, dont les couleurs suivent le soleil réel, puis des surfaces douces et arrondies. */
+@property --sky-top{syntax:'<color>';inherits:true;initial-value:#0b1530}
+@property --sky-bot{syntax:'<color>';inherits:true;initial-value:#1b2447}
+@property --hero-ink{syntax:'<color>';inherits:true;initial-value:#ffffff}
+:root{
+  --bg:#f2f4f7; --surface:#ffffff; --ink:#0e1822; --muted:#5d6b78; --line:rgba(14,24,34,.09); --tint:#eef1f5;
+  --shadow:0 1px 2px rgba(14,24,34,.04),0 18px 40px -20px rgba(14,24,34,.22);
+  --accent:#ff8a1f; --accent-ink:#8a4300;
+  --g0:#5aa8ec; --g1:#d3eaf8; --g2:#f0b27c; --g3:#6a74ad; --g4:#26376a; --g5:#0c1630;
+  --sans:"Sora","Helvetica Neue",Arial,sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#090e14; --surface:#121a23; --ink:#eaf0f5; --muted:#92a1af; --line:rgba(234,240,245,.1); --tint:#19232e;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -20px rgba(0,0,0,.7);
+    --accent:#ffa040; --accent-ink:#ffc27a;
+    --g0:#2f6fae; --g1:#5f9bc8; --g2:#c27d4f; --g3:#4a5a8c; --g4:#1b2a4c; --g5:#0a1226; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#090e14; --surface:#121a23; --ink:#eaf0f5; --muted:#92a1af; --line:rgba(234,240,245,.1); --tint:#19232e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 18px 40px -20px rgba(0,0,0,.7);
+  --accent:#ffa040; --accent-ink:#ffc27a;
+  --g0:#2f6fae; --g1:#5f9bc8; --g2:#c27d4f; --g3:#4a5a8c; --g4:#1b2a4c; --g5:#0a1226; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-block:16px 56px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+p{margin:0}
+
+/* En-tête */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:4px 6px}
+.brand{display:flex;align-items:center;gap:10px;font:600 18px/1 var(--sans);letter-spacing:-.02em}
+.sunmark{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe6a3,var(--accent) 70%);box-shadow:0 0 18px 2px rgba(255,138,31,.45);flex:none}
+.in{font:inherit;font-size:16px;padding:0 16px;min-height:44px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);min-width:0}
+.in::placeholder{color:var(--muted)}
+select.in{padding-right:12px;font-size:15px;font-weight:500;box-shadow:var(--shadow)}
+.btn{font:500 14px/1 var(--sans);padding:0 18px;min-height:44px;border-radius:999px;border:1px solid transparent;background:var(--tint);color:var(--ink);cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:color-mix(in srgb,var(--ink) 10%,var(--tint))}
+.btn:active{transform:scale(.97)}
+.btn.go{background:var(--ink);color:var(--surface)}
+.btn.go:hover{background:color-mix(in srgb,var(--ink) 82%,var(--accent))}
+.btn:disabled{opacity:.5;cursor:default}
+.custom{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;font-size:14px;padding:0 6px}
+.custom label{display:flex;align-items:center;gap:8px}
+.custom .in{width:112px}
+.custom p{color:var(--muted);flex:1 1 220px}
+
+/* Ciel vivant */
+.hero{position:relative;overflow:hidden;isolation:isolate;border-radius:32px;color:var(--hero-ink);
+  background:linear-gradient(180deg,var(--sky-top),var(--sky-bot));
+  display:grid;grid-template-columns:1fr;gap:18px;padding:22px 18px 18px;
+  transition:--sky-top 1.4s ease,--sky-bot 1.4s ease,--hero-ink 1.4s ease}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;opacity:var(--stars,0);transition:opacity 1.4s;pointer-events:none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 8% 18%,#fff,transparent),radial-gradient(1.2px 1.2px at 17% 62%,#fff,transparent),
+    radial-gradient(1.8px 1.8px at 29% 30%,#fff,transparent),radial-gradient(1.2px 1.2px at 41% 12%,#fff,transparent),
+    radial-gradient(1.4px 1.4px at 52% 48%,#fff,transparent),radial-gradient(1.8px 1.8px at 63% 20%,#fff,transparent),
+    radial-gradient(1.2px 1.2px at 74% 56%,#fff,transparent),radial-gradient(1.6px 1.6px at 83% 14%,#fff,transparent),
+    radial-gradient(1.2px 1.2px at 91% 40%,#fff,transparent),radial-gradient(1.4px 1.4px at 36% 78%,#fff,transparent),
+    radial-gradient(1.2px 1.2px at 69% 84%,#fff,transparent),radial-gradient(1.6px 1.6px at 12% 88%,#fff,transparent)}
+.orb{position:absolute;z-index:-1;width:min(300px,70vw);aspect-ratio:1;left:calc(var(--sx,.5)*100%);top:calc(var(--sy,.9)*100%);
+  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;opacity:calc(var(--orb,0)*.6);transition:opacity 1.4s;
+  background:radial-gradient(circle,#fff7d8 0,#ffd479 14%,rgba(255,176,64,.5) 34%,rgba(255,150,40,0) 68%)}
+.hero-main{display:flex;flex-direction:column;gap:10px;min-width:0;padding:4px 4px 0}
+.lead{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font:500 14px/1.2 var(--sans);
+  background:color-mix(in srgb,var(--hero-ink) 14%,transparent);backdrop-filter:blur(8px)}
+.hero.live .lead::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--hero-ink);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+.clock{font:300 clamp(2.8rem,14vw,7rem)/1 var(--mono);letter-spacing:-.05em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sub{font-size:15px;opacity:.9;overflow-wrap:anywhere}
+.hero-side{display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px;border-radius:24px;
+  background:color-mix(in srgb,var(--hero-ink) 9%,transparent);border:1px solid color-mix(in srgb,var(--hero-ink) 16%,transparent);backdrop-filter:blur(14px)}
+.hero-side p{font-size:14.5px}
+.hero-side p b{font-weight:700}
+.datenav{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.datenav .btn{background:color-mix(in srgb,var(--hero-ink) 14%,transparent);color:var(--hero-ink);min-width:44px;padding:0 14px}
+.datenav .btn:hover{background:color-mix(in srgb,var(--hero-ink) 24%,transparent)}
+.datenav .btn:focus-visible{outline-color:var(--hero-ink)}
+.dtxt{flex:1 1 150px;text-align:center;font-weight:600;min-width:0}
+@media (min-width:880px){
+  .hero{grid-template-columns:1.5fr 1fr;gap:28px;padding:36px 36px 36px;align-items:end}
+  .hero-main{gap:14px}
+}
+
+/* Surfaces */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:20px 18px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h2{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;font:600 19px/1.2 var(--sans);letter-spacing:-.02em}
+.panel h2 span{font:400 13px/1.3 var(--sans);letter-spacing:0;color:var(--muted)}
+.chart{width:100%;min-width:0;touch-action:pan-y}
+.chart svg{display:block;max-width:100%}
+
+/* Graphiques */
+.gl{stroke:rgba(255,255,255,.2);stroke-width:1;fill:none}
+.ghost{fill:none;stroke:#fff;stroke-opacity:.65;stroke-width:1.3;stroke-dasharray:3 5;stroke-linecap:round}
+.curve{fill:none;stroke:var(--accent);stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 7px rgba(255,150,40,.75))}
+.horizon{stroke:#fff;stroke-opacity:.55;stroke-width:1}
+.pill{fill:rgba(8,16,30,.8)}
+.pillA{fill:var(--accent)}
+.pt{font:500 11.5px var(--mono);fill:#fff}
+.ptA{font:500 11.5px var(--mono);fill:#1c0f00}
+.axt{font:400 11px var(--mono);fill:var(--muted)}
+.gt{font:400 11px var(--mono);fill:#fff;paint-order:stroke;stroke:rgba(8,16,30,.5);stroke-width:3px;stroke-linejoin:round}
+.nowline{stroke:#fff;stroke-opacity:.9;stroke-width:1.5;stroke-dasharray:3 4}
+.dot{fill:#fff;stroke:var(--accent);stroke-width:3}
+.ylines{fill:none;stroke:var(--accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.ygrid{stroke:var(--line);stroke-width:1}
+.sel{stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 4}
+.hol{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.ydot{fill:var(--ink)}
+.pillI{fill:var(--ink)}
+.ptI{font:500 11.5px var(--mono);fill:var(--surface)}
+.range{width:100%;accent-color:var(--accent);height:44px;margin:0}
+
+/* Faits */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0}
+.fact{padding:14px 16px;background:var(--tint);border-radius:20px;min-width:0}
+.fact dt{font:500 13px/1.2 var(--sans);color:var(--muted)}
+.fact dd{margin:6px 0 0}
+.fact .v{display:block;font:600 clamp(1.6rem,5vw,2rem)/1.05 var(--sans);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.fact .n{display:block;font-size:12.5px;color:var(--muted);margin-top:4px}
+
+/* Agenda */
+.agenda{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.agenda li{display:grid;grid-template-columns:minmax(104px,150px) 1fr;gap:4px 14px;padding:13px 16px;background:var(--tint);border-radius:20px;align-items:baseline}
+.agenda .t{font:500 14px/1.3 var(--mono);white-space:nowrap}
+.agenda b{display:block;font-weight:600}
+.agenda span.n{display:block;font-size:13.5px;color:var(--muted)}
+.agenda li.past{opacity:.5}
+@media (max-width:420px){.agenda li{grid-template-columns:1fr}}
+.foot{font-size:13px;color:var(--muted);padding:0 8px}
+
+/* Assistant */
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.grow{flex:1 1 220px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 14px/1.25 var(--sans);text-align:left;padding:10px 15px;min-height:44px;border:1px solid var(--line);border-radius:999px;background:var(--tint);color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+.chip:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--tint))}
+.chat{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto}
+.chat:empty{display:none}
+.msg{max-width:min(94%,680px);padding:11px 15px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.msg.u{align-self:flex-end;background:var(--ink);color:var(--surface);border-radius:20px 20px 6px 20px}
+.msg.a{align-self:flex-start;background:var(--tint);border-radius:20px 20px 20px 6px}
+.msg.wait{color:var(--muted);font-style:italic}
+.status{font:400 12px/1.3 var(--mono);color:var(--muted);min-height:16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="sunmark" aria-hidden="true"></span>Sunset</div>
+    <div>
+      <label class="sr" for="placeSel">Lieu</label>
+      <select id="placeSel" class="in"></select>
+    </div>
+  </header>
+  <div class="custom" id="custom" hidden>
+    <label for="latIn">Latitude <input id="latIn" class="in" type="number" step="0.01" min="-90" max="90" inputmode="decimal"></label>
+    <label for="lonIn">Longitude <input id="lonIn" class="in" type="number" step="0.01" min="-180" max="180" inputmode="decimal"></label>
+    <p>Les heures suivent le fuseau de cet appareil.</p>
+  </div>
+
+  <section class="hero live" aria-label="Lumière du jour">
+    <div class="orb" aria-hidden="true"></div>
+    <div class="hero-main">
+      <p class="lead" id="heroLabel"></p>
+      <p class="clock" id="heroClock">00:00:00</p>
+      <p class="sub" id="heroSub"></p>
+    </div>
+    <div class="hero-side">
+      <div class="datenav">
+        <button type="button" class="btn" id="prevDay" aria-label="Jour précédent">&larr;</button>
+        <p class="dtxt" id="dateTxt"></p>
+        <button type="button" class="btn" id="nextDay" aria-label="Jour suivant">&rarr;</button>
+        <button type="button" class="btn" id="todayBtn" hidden>Aujourd'hui</button>
+      </div>
+      <p id="deltaTxt"></p>
+      <p id="solTxt"></p>
+    </div>
+  </section>
+
+  <section class="panel" id="aiPanel" aria-labelledby="hAi" hidden>
+    <h2 id="hAi">Demande à la lumière <span>assistant IA : il calcule avec les données de cette page</span></h2>
+    <div class="chips" id="chips"></div>
+    <div class="chat" id="chat" role="log" aria-live="polite"></div>
+    <p class="status" id="aiStatus" aria-live="off"></p>
+    <form id="aiForm" class="row">
+      <label class="sr" for="aiIn">Ta question</label>
+      <input id="aiIn" class="in grow" placeholder="Ex. : à partir de quand les soirées rallongent-elles ?" maxlength="400" autocomplete="off">
+      <button class="btn go" id="aiSend">Demander</button>
+      <button type="button" class="btn" id="aiStop" hidden>Stop</button>
+      <button type="button" class="btn" id="aiReset" hidden>Nouvelle conversation</button>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="hSun">
+    <h2 id="hSun">Hauteur du soleil <span>heure locale, du lever au coucher et au-delà</span></h2>
+    <div class="chart" id="sunChart"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="hFacts">
+    <h2 id="hFacts">La journée en six repères</h2>
+    <dl class="facts" id="facts"></dl>
+  </section>
+
+  <section class="panel" aria-labelledby="hAg">
+    <h2 id="hAg">Agenda de la lumière <span>repères pratiques, à titre indicatif</span></h2>
+    <ol class="agenda" id="agenda"></ol>
+  </section>
+
+  <section class="panel" aria-labelledby="hYear">
+    <h2 id="hYear">Durée du jour sur l'année <span>glisse pour changer de date</span></h2>
+    <div class="chart" id="yearChart"></div>
+    <label class="sr" for="yearRange">Choisir un jour de l'année</label>
+    <input class="range" id="yearRange" type="range" min="0" max="364" value="0">
+  </section>
+
+  <p class="foot">Calculs astronomiques faits sur cet appareil, sans connexion, à une ou deux minutes près. Les hauteurs de soleil ne tiennent pas compte de la météo.</p>
+</div>
+
+<script>
+(function(){
+  var rad=Math.PI/180, deg=180/Math.PI;
+  var $=function(s){return document.querySelector(s)};
+  var pad=function(n){return String(n).padStart(2,'0')};
+  var cap=function(s){return s.charAt(0).toUpperCase()+s.slice(1)};
+  var KEY='reste-du-jour-v1';
+
+  var PLACES=[
+    {id:'lamballe',n:'Lamballe-Armor',lat:48.47,lon:-2.52},
+    {id:'rennes',n:'Rennes',lat:48.11,lon:-1.68},
+    {id:'brest',n:'Brest',lat:48.39,lon:-4.49},
+    {id:'nantes',n:'Nantes',lat:47.22,lon:-1.55},
+    {id:'paris',n:'Paris',lat:48.86,lon:2.35},
+    {id:'lille',n:'Lille',lat:50.63,lon:3.06},
+    {id:'strasbourg',n:'Strasbourg',lat:48.57,lon:7.75},
+    {id:'lyon',n:'Lyon',lat:45.76,lon:4.84},
+    {id:'bordeaux',n:'Bordeaux',lat:44.84,lon:-0.58},
+    {id:'toulouse',n:'Toulouse',lat:43.60,lon:1.44},
+    {id:'marseille',n:'Marseille',lat:43.30,lon:5.37},
+    {id:'nice',n:'Nice',lat:43.70,lon:7.27}
+  ];
+  var cfg={id:'lamballe',lat:0,lon:0};
+  try{var raw=localStorage.getItem(KEY);if(raw){var c=JSON.parse(raw);if(c&&c.id)cfg=c}}catch(e){}
+  function saveCfg(){try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}}
+  function place(){
+    if(cfg.id==='custom'){
+      var tz='UTC';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'}catch(e){}
+      return {n:'Autre lieu',lat:Math.max(-89,Math.min(89,+cfg.lat||0)),lon:Math.max(-180,Math.min(180,+cfg.lon||0)),tz:tz};
+    }
+    var p=PLACES.find(function(x){return x.id===cfg.id})||PLACES[0];
+    return {n:p.n,lat:p.lat,lon:p.lon,tz:'Europe/Paris'};
+  }
+
+  /* ---------- Astronomie (algorithme NOAA) ---------- */
+  function solar(ms){
+    var jd=ms/86400000+2440587.5, T=(jd-2451545)/36525;
+    var L0=(280.46646+T*(36000.76983+T*0.0003032))%360;
+    var M=357.52911+T*(35999.05029-0.0001537*T);
+    var e=0.016708634-T*(0.000042037+0.0000001267*T);
+    var Mr=M*rad;
+    var C=Math.sin(Mr)*(1.914602-T*(0.004817+0.000014*T))+Math.sin(2*Mr)*(0.019993-0.000101*T)+Math.sin(3*Mr)*0.000289;
+    var om=125.04-1934.136*T;
+    var lam=L0+C-0.00569-0.00478*Math.sin(om*rad);
+    var eps=23+(26+((21.448-T*(46.815+T*(0.00059-T*0.001813))))/60)/60+0.00256*Math.cos(om*rad);
+    var dec=Math.asin(Math.sin(eps*rad)*Math.sin(lam*rad));
+    var y=Math.pow(Math.tan(eps*rad/2),2), L0r=L0*rad;
+    var eqt=4*deg*(y*Math.sin(2*L0r)-2*e*Math.sin(Mr)+4*e*y*Math.sin(Mr)*Math.cos(2*L0r)-0.5*y*y*Math.sin(4*L0r)-1.25*e*e*Math.sin(2*Mr));
+    return {dec:dec,eqt:eqt};
+  }
+  function altitude(ms,lat,lon){
+    var s=solar(ms), d=new Date(ms);
+    var mn=d.getUTCHours()*60+d.getUTCMinutes()+d.getUTCSeconds()/60+d.getUTCMilliseconds()/60000;
+    var tst=(mn+s.eqt+4*lon)%1440;if(tst<0)tst+=1440;
+    var ha=(tst/4-180)*rad, la=lat*rad;
+    var cz=Math.sin(la)*Math.sin(s.dec)+Math.cos(la)*Math.cos(s.dec)*Math.cos(ha);
+    return 90-Math.acos(Math.max(-1,Math.min(1,cz)))*deg;
+  }
+  function dayLenHours(y,i,lat,lon){
+    var s=solar(Date.UTC(y,0,1+i,12)-lon*240000), la=lat*rad;
+    var cosH=(Math.sin(-0.833*rad)-Math.sin(la)*Math.sin(s.dec))/(Math.cos(la)*Math.cos(s.dec));
+    if(cosH>=1)return 0;if(cosH<=-1)return 24;
+    return 2*Math.acos(cosH)*deg/15;
+  }
+
+  /* ---------- Fuseaux et dates ---------- */
+  var fmtCache={};
+  function partsFmt(tz){return fmtCache['p'+tz]||(fmtCache['p'+tz]=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}))}
+  function timeFmt(tz){return fmtCache['t'+tz]||(fmtCache['t'+tz]=new Intl.DateTimeFormat('fr-FR',{timeZone:tz,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}))}
+  function tzOffset(tz,ms){
+    ms=Math.floor(ms/1000)*1000;
+    var o={};partsFmt(tz).formatToParts(new Date(ms)).forEach(function(x){o[x.type]=x.value});
+    return (Date.UTC(+o.year,+o.month-1,+o.day,(+o.hour)%24,+o.minute,+o.second)-ms)/60000;
+  }
+  function dayStart(y,m,d,tz){
+    var t0=Date.UTC(y,m,d), off=tzOffset(tz,t0), s=t0-off*60000, off2=tzOffset(tz,s);
+    if(off2!==off)s=t0-off2*60000;
+    return s;
+  }
+  function ymdNow(tz){
+    var o={};partsFmt(tz).formatToParts(new Date()).forEach(function(x){o[x.type]=x.value});
+    return {y:+o.year,m:+o.month-1,d:+o.day};
+  }
+  function addDays(a,n){var t=new Date(Date.UTC(a.y,a.m,a.d+n));return {y:t.getUTCFullYear(),m:t.getUTCMonth(),d:t.getUTCDate()}}
+  function key(a){return a.y+'-'+a.m+'-'+a.d}
+  function fmtT(ms,tz){return ms==null?'—':timeFmt(tz).format(new Date(ms))}
+  function fmtHM(ms){var t=Math.round(ms/60000);return Math.floor(t/60)+' h '+pad(t%60)+' min'}
+  function fmtClock(ms){var t=Math.max(0,Math.floor(ms/1000));return pad(Math.floor(t/3600))+':'+pad(Math.floor(t%3600/60))+':'+pad(t%60)}
+  function fmtDay(a,opt){return new Date(Date.UTC(a.y,a.m,a.d,12)).toLocaleDateString('fr-FR',Object.assign({timeZone:'UTC'},opt))}
+  function fmtDelta(sec){var a=Math.abs(sec),m=Math.floor(a/60),s=Math.round(a%60);if(s===60){m++;s=0}return m?m+' min '+s+' s':s+' s'}
+
+  /* ---------- Une journée ---------- */
+  var dayCache={};
+  function dayInfo(a,PP){
+    var P=PP||place(), k=key(a)+'|'+P.lat+'|'+P.lon+'|'+P.tz;
+    if(dayCache[k])return dayCache[k];
+    var st=dayStart(a.y,a.m,a.d,P.tz), en=dayStart(a.y,a.m,a.d+1,P.tz);
+    var N=Math.max(1,Math.round((en-st)/240000)), step=(en-st)/N, alt=new Array(N+1), i;
+    var mx=-999,mn=999,im=0;
+    for(i=0;i<=N;i++){alt[i]=altitude(st+i*step,P.lat,P.lon);if(alt[i]>mx){mx=alt[i];im=i}if(alt[i]<mn)mn=alt[i]}
+    function cross(th){
+      var up=[],down=[];
+      for(var j=1;j<=N;j++){
+        var u=alt[j-1]-th,v=alt[j]-th;
+        if(u<0&&v>=0)up.push(st+(j-1+(-u)/(v-u))*step);
+        else if(u>=0&&v<0)down.push(st+(j-1+u/(u-v))*step);
+      }
+      return {up:up,down:down};
+    }
+    var last=function(a){return a.length?a[a.length-1]:null};
+    var rs=cross(-0.833), cv=cross(-6), gd=cross(6), lw=cross(12);
+    var noon=st+im*step;
+    if(im>0&&im<N){var y0=alt[im-1],y1=alt[im],y2=alt[im+1],dn=y0-2*y1+y2;if(dn!==0)noon=st+(im+0.5*(y0-y2)/dn)*step}
+    var sunrise=rs.up[0]||null, sunset=last(rs.down), len=null;
+    if(sunrise&&sunset&&sunset>sunrise)len=sunset-sunrise;
+    else if(mx<-0.833)len=0;else if(mn>-0.833)len=en-st;
+    var info={st:st,en:en,N:N,alt:alt,max:mx,min:mn,sunrise:sunrise,sunset:sunset,
+      dawn:cv.up[0]||null,dusk:last(cv.down),goldPM:last(gd.down),
+      laundry:(lw.up[0]&&last(lw.down))?{a:lw.up[0],b:last(lw.down)}:null,
+      noon:noon,altNoon:altitude(noon,P.lat,P.lon),len:len,tz:P.tz};
+    dayCache[k]=info;
+    return info;
+  }
+  var serCache={};
+  function series(y){
+    var P=place(), k=y+'|'+P.lat+'|'+P.lon;
+    if(serCache[k])return serCache[k];
+    var n=((y%4===0&&y%100!==0)||y%400===0)?366:365, s=[];
+    for(var i=0;i<n;i++)s.push(dayLenHours(y,i,P.lat,P.lon));
+    return serCache[k]=s;
+  }
+
+  /* ---------- État ---------- */
+  var sel=null; // null = aujourd'hui
+  function todayYMD(){return ymdNow(place().tz)}
+  function curYMD(){return sel||todayYMD()}
+  function isToday(){return key(curYMD())===key(todayYMD())}
+  var lastTodayKey=key(todayYMD());
+
+  /* ---------- Ciel : couleurs selon la hauteur réelle du soleil ---------- */
+  var SKY=[
+    [-18,'#050a14','#0b1426'],[-12,'#0b1530','#1b2447'],[-6,'#17295a','#6b3c52'],
+    [-1,'#254a8a','#c25d3e'],[3,'#5b95d0','#eab070'],[10,'#55a6ea','#cfe7f5'],[30,'#4aa0ea','#d8edf8']
+  ];
+  function hex(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]}
+  function mixc(c1,c2,t){var a=hex(c1),b=hex(c2);return 'rgb('+a.map(function(v,i){return Math.round(v+(b[i]-v)*t)}).join(',')+')'}
+  function skyAt(alt){
+    if(alt<=SKY[0][0])return {t:SKY[0][1],b:SKY[0][2]};
+    for(var i=1;i<SKY.length;i++){
+      if(alt<=SKY[i][0]){var p=SKY[i-1],q=SKY[i],f=(alt-p[0])/(q[0]-p[0]);return {t:mixc(p[1],q[1],f),b:mixc(p[2],q[2],f)}}
+    }
+    var l=SKY[SKY.length-1];return {t:l[1],b:l[2]};
+  }
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function paintSky(alt,f){
+    var h=$('.hero'), sk=skyAt(alt), st=h.style;
+    st.setProperty('--sky-top',sk.t);st.setProperty('--sky-bot',sk.b);
+    st.setProperty('--hero-ink',alt>=1.5?'#07131c':'#ffffff');
+    st.setProperty('--stars',String(clamp((-2-alt)/6,0,1)));
+    st.setProperty('--orb',String(clamp((alt+8)/8,0,1)));
+    st.setProperty('--sx',String(clamp(f,0.04,0.96)));
+    st.setProperty('--sy',String(0.98-clamp(alt,-10,45)/45*0.82));
+  }
+
+  /* ---------- Bande horloge ---------- */
+  function renderHero(){
+    var P=place(), a=curYMD(), info=dayInfo(a), today=isToday(), now=Date.now();
+    var T=function(ms){return fmtT(ms,P.tz)};
+    var label,clock,sub;
+    if(!today){
+      label='Durée du jour';
+      clock=info.len==null?'—':fmtClock(info.len);
+      sub=info.sunrise&&info.sunset?'Lever à '+T(info.sunrise)+' · coucher à '+T(info.sunset):(info.len===0?'Le soleil reste sous l’horizon toute la journée.':'Le soleil ne se couche pas ce jour-là.');
+    }else if(info.sunrise&&info.sunset){
+      if(now<info.sunrise){label='Le soleil se lève dans';clock=fmtClock(info.sunrise-now);sub='Lever à '+T(info.sunrise)+' · coucher à '+T(info.sunset)}
+      else if(now<info.sunset){label='Il reste de jour';clock=fmtClock(info.sunset-now);sub='Le soleil se couche à '+T(info.sunset)}
+      else{
+        var nx=dayInfo(addDays(a,1));
+        label='Le soleil se lève dans';
+        clock=nx.sunrise?fmtClock(nx.sunrise-now):'—';
+        sub='Couché depuis '+T(info.sunset)+(nx.sunrise?' · lever demain à '+T(nx.sunrise):'');
+      }
+    }else{
+      label=info.len===0?'Nuit polaire':'Soleil de minuit';clock='—';
+      sub=info.len===0?'Le soleil reste sous l’horizon toute la journée.':'Le soleil ne se couche pas aujourd’hui.';
+    }
+    $('#heroLabel').textContent=label;$('#heroClock').textContent=clock;$('#heroSub').textContent=sub;
+    $('#dateTxt').textContent=cap(fmtDay(a,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
+    $('#todayBtn').hidden=today;
+    var hero=$('.hero');
+    if(hero.classList){hero.classList.toggle('live',today)}
+    if(today&&now>=info.st&&now<=info.en)paintSky(altitude(now,P.lat,P.lon),(now-info.st)/(info.en-info.st));
+    else paintSky(info.altNoon,(info.noon-info.st)/(info.en-info.st));
+  }
+  function renderSide(){
+    var a=curYMD(), info=dayInfo(a), prev=dayInfo(addDays(a,-1)), today=isToday();
+    var ref=today?'hier':'la veille';
+    var dl=$('#deltaTxt');
+    if(info.len!=null&&prev.len!=null&&info.len>0&&info.len<86400000){
+      var diff=(info.len-prev.len)/1000;
+      dl.innerHTML=Math.abs(diff)<1?'Le jour dure autant qu’'+ref+'.':'Le jour '+(diff>0?'gagne':'perd')+' <b>'+fmtDelta(diff)+'</b> par rapport à '+(today?'hier':'la veille')+'.';
+    }else dl.textContent='';
+    var S=series(a.y), n=S.length, idx=Math.round((Date.UTC(a.y,a.m,a.d)-Date.UTC(a.y,0,1))/864e5);
+    var mi=S.indexOf(Math.min.apply(null,S)), ma=S.indexOf(Math.max.apply(null,S));
+    var dir=S[Math.min(n-1,idx+1)]-S[Math.max(0,idx-1)];
+    var target=dir<0?mi:ma, days=target-idx;if(days<0)days+=n;
+    var tdate=fmtDay(addDays({y:a.y,m:0,d:1},target),{day:'numeric',month:'long'});
+    var sl=$('#solTxt');
+    if(days===0)sl.innerHTML='C’est <b>le jour le '+(dir<0?'plus court':'plus long')+'</b> de l’année.';
+    else sl.innerHTML=dir<0?'Les jours raccourcissent encore pendant <b>'+days+' jour'+(days>1?'s':'')+'</b>, jusqu’au jour le plus court (vers le '+tdate+').':'Les jours rallongent encore pendant <b>'+days+' jour'+(days>1?'s':'')+'</b>, jusqu’au jour le plus long (vers le '+tdate+').';
+  }
+
+  /* ---------- Graphique du soleil ---------- */
+  function pill(x,y,text,W,m,cls){
+    var w=text.length*7.2+16, h=21, px=Math.max(m.l+2,Math.min(W-m.r-w-2,x-w/2));
+    return '<rect class="'+(cls||'pill')+'" x="'+px.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h+'" rx="10.5"/><text class="'+(cls==='pillA'?'ptA':cls==='pillI'?'ptI':'pt')+'" x="'+(px+w/2).toFixed(1)+'" y="'+(y+14.5).toFixed(1)+'" text-anchor="middle">'+text+'</text>';
+  }
+  function renderSun(){
+    var box=$('#sunChart'), P=place(), a=curYMD(), info=dayInfo(a), today=isToday();
+    var W=Math.max(280,Math.floor(box.clientWidth)), H=W<520?250:290;
+    var m={l:34,r:2,t:2,b:26}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+    var maxPoss=Math.min(90,90-Math.abs(P.lat)+23.44), aMax=Math.ceil((maxPoss+2)/10)*10, aMin=-24;
+    var Y=function(v){return m.t+(aMax-v)/(aMax-aMin)*ih}, XF=function(f){return m.l+f*iw};
+    var yh=Y(-0.833), s='', lab='';
+    var off=function(v){return ((aMax-v)/(aMax-aMin)).toFixed(4)};
+    s+='<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--g0)"/><stop offset="'+off(-0.833)+'" style="stop-color:var(--g1)"/><stop offset="'+off(-0.833)+'" style="stop-color:var(--g2)"/><stop offset="'+off(-6)+'" style="stop-color:var(--g3)"/><stop offset="'+off(-12)+'" style="stop-color:var(--g4)"/><stop offset="1" style="stop-color:var(--g5)"/></linearGradient>'+
+       '<linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.8"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:.08"/></linearGradient>'+
+       '<clipPath id="pc"><rect x="'+m.l+'" y="'+m.t+'" width="'+iw+'" height="'+ih+'" rx="20"/></clipPath></defs>';
+    s+='<g clip-path="url(#pc)"><rect x="'+m.l+'" y="'+m.t+'" width="'+iw+'" height="'+ih+'" fill="url(#sg)"/>';
+    var v;
+    for(v=0;v<aMax;v+=20){s+='<line class="gl" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/>'}
+    function ghost(ymd,txt){
+      var g=dayInfo(ymd), pts=[], bi=0, bv=-999, i;
+      for(i=0;i<=g.N;i+=4){var f=i/g.N, al=g.alt[i];pts.push(XF(f).toFixed(1)+','+Y(al).toFixed(1));if(al>bv){bv=al;bi=i}}
+      s+='<path class="ghost" d="M'+pts.join('L')+'"/>';
+      if(W>=480)lab+='<text class="gt" x="'+XF(bi/g.N).toFixed(1)+'" y="'+Math.max(m.t+13,Y(bv)-7).toFixed(1)+'" text-anchor="middle">'+txt+'</text>';
+    }
+    ghost({y:a.y,m:5,d:21},'21 juin');ghost({y:a.y,m:11,d:21},'21 déc.');
+    var pts=[],area=['M'+XF(0).toFixed(1)+','+yh.toFixed(1)],i2;
+    for(i2=0;i2<=info.N;i2++){
+      var f=i2/info.N, al=info.alt[i2];
+      pts.push(XF(f).toFixed(1)+','+Y(al).toFixed(1));
+      area.push('L'+XF(f).toFixed(1)+','+Y(Math.max(al,-0.833)).toFixed(1));
+    }
+    area.push('L'+XF(1).toFixed(1)+','+yh.toFixed(1)+'Z');
+    s+='<path d="'+area.join('')+'" fill="url(#ag)"/><path class="curve" d="M'+pts.join('L')+'"/>';
+    s+='<line class="horizon" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+yh.toFixed(1)+'" y2="'+yh.toFixed(1)+'"/>';
+    var fr=function(t){return (t-info.st)/(info.en-info.st)};
+    var now=Date.now(), showNow=today&&now>=info.st&&now<=info.en;
+    if(showNow){var xn0=XF(fr(now));s+='<line class="nowline" x1="'+xn0.toFixed(1)+'" x2="'+xn0.toFixed(1)+'" y1="'+m.t+'" y2="'+(m.t+ih)+'"/>'}
+    s+='</g>'+lab;
+    for(v=0;v<aMax;v+=20){s+='<text class="axt" x="'+(m.l-7)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+v+'°</text>'}
+    [info.sunrise,info.sunset].forEach(function(t){
+      if(t==null)return;
+      var x=XF(fr(t));
+      s+='<circle class="dot" cx="'+x.toFixed(1)+'" cy="'+yh.toFixed(1)+'" r="5"/>'+pill(x,yh+11,fmtT(t,P.tz),W,m);
+    });
+    if(showNow){
+      var xn=XF(fr(now)), an=altitude(now,P.lat,P.lon);
+      s+='<circle class="dot" cx="'+xn.toFixed(1)+'" cy="'+Y(an).toFixed(1)+'" r="6.5"/>'+pill(xn,m.t+ih-27,'Maintenant '+fmtT(now,P.tz),W,m,'pillA');
+    }
+    for(var h=0;h<=24;h+=3){
+      var t=info.st+h*3600000;if(t>info.en+60000)continue;
+      s+='<text class="axt" x="'+XF(fr(t)).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+(h===0?'start':h===24?'end':'middle')+'">'+h+' h</text>';
+    }
+    var label='Courbe de la hauteur du soleil pour le '+fmtDay(a,{day:'numeric',month:'long'})+'. '+(info.sunrise&&info.sunset?'Lever '+fmtT(info.sunrise,P.tz)+', coucher '+fmtT(info.sunset,P.tz)+', hauteur maximale '+info.altNoon.toFixed(1).replace('.',',')+' degrés.':'');
+    box.innerHTML='<svg role="img" aria-label="'+label+'" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
+  }
+
+  /* ---------- Faits et agenda ---------- */
+  function renderFacts(){
+    var P=place(), info=dayInfo(curYMD()), T=function(x){return fmtT(x,P.tz)};
+    var rows=[
+      ['Aube',T(info.dawn),'début de la lumière'],
+      ['Lever',T(info.sunrise),'soleil au bord de l’horizon'],
+      ['Midi solaire',T(info.noon),'soleil à '+info.altNoon.toFixed(1).replace('.',',')+'° de hauteur'],
+      ['Coucher',T(info.sunset),'le soleil passe sous l’horizon'],
+      ['Crépuscule',T(info.dusk),'fin de la lumière utile'],
+      ['Durée du jour',info.len==null?'—':fmtHM(info.len),'du lever au coucher']
+    ];
+    $('#facts').innerHTML=rows.map(function(r){return '<div class="fact"><dt>'+r[0]+'</dt><dd><span class="v">'+r[1]+'</span><span class="n">'+r[2]+'</span></dd></div>'}).join('');
+  }
+  function renderAgenda(){
+    var P=place(), info=dayInfo(curYMD()), today=isToday(), now=Date.now(), T=function(x){return fmtT(x,P.tz)}, A=[];
+    if(info.max>-0.833){
+      if(info.laundry)A.push({s:info.laundry.a,e:info.laundry.b,t:T(info.laundry.a)+' – '+T(info.laundry.b),h:'Linge dehors',n:'Le soleil est à plus de 12°. '+'Le vent et l’humidité comptent aussi.'});
+      else A.push({s:-Infinity,e:-Infinity,t:'—',h:'Linge dehors',n:'Le soleil ne dépasse pas 12° ce jour-là : le séchage dehors sera lent.'});
+      if(info.goldPM&&info.sunset)A.push({s:info.goldPM,e:info.sunset,t:T(info.goldPM)+' – '+T(info.sunset),h:'Heure dorée',n:'Lumière douce et rasante, la meilleure pour les photos.'});
+      if(info.sunset)A.push({s:info.sunset,e:info.sunset,t:T(info.sunset),h:'Allume l’éclairage',n:'Vélo, voiture ou maison : le soleil passe sous l’horizon.'});
+      if(info.dusk)A.push({s:info.dusk,e:info.dusk,t:T(info.dusk),h:'Fin de la lumière utile',n:'Après le crépuscule civil, une lampe devient nécessaire pour marcher dehors.'});
+    }
+    A.sort(function(x,y){return x.s-y.s});
+    $('#agenda').innerHTML=A.length?A.map(function(r){
+      return '<li'+(today&&r.e<now?' class="past"':'')+'><span class="t">'+r.t+'</span><div><b>'+r.h+'</b><span class="n">'+r.n+'</span></div></li>';
+    }).join(''):'<li><span class="t">—</span><div><b>Pas de lever du soleil</b><span class="n">Le soleil reste sous l’horizon toute la journée.</span></div></li>';
+  }
+
+  /* ---------- Graphique de l'année ---------- */
+  var yearGeom=null;
+  function renderYear(){
+    var box=$('#yearChart'), a=curYMD(), S=series(a.y), n=S.length;
+    var W=Math.max(280,Math.floor(box.clientWidth)), H=W<520?190:220;
+    var m={l:36,r:12,t:30,b:24}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+    var lo=Math.floor(Math.min.apply(null,S)), hi=Math.ceil(Math.max.apply(null,S));if(hi-lo<2){hi+=1;lo=Math.max(0,lo-1)}
+    var X=function(i){return m.l+i/(n-1)*iw}, Y=function(v){return m.t+(hi-v)/(hi-lo)*ih};
+    var s='<defs><linearGradient id="yg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.38"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>', step=(hi-lo)>10?4:2, v;
+    for(v=Math.ceil(lo/step)*step;v<=hi;v+=step)s+='<line class="ygrid" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/><text class="axt" x="'+(m.l-7)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+v+' h</text>';
+    var mo, L='JFMAMJJASOND';
+    for(mo=0;mo<12;mo++){
+      var d0=Math.round((Date.UTC(a.y,mo,1)-Date.UTC(a.y,0,1))/864e5), d1=Math.round((Date.UTC(a.y,mo+1,1)-Date.UTC(a.y,0,1))/864e5);
+      s+='<text class="axt" x="'+X((d0+Math.min(d1,n))/2).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle">'+L[mo]+'</text>';
+    }
+    var pts=S.map(function(h,i){return X(i).toFixed(1)+','+Y(h).toFixed(1)});
+    s+='<path d="M'+X(0).toFixed(1)+','+(m.t+ih)+'L'+pts.join('L')+'L'+X(n-1).toFixed(1)+','+(m.t+ih)+'Z" fill="url(#yg)"/><path class="ylines" d="M'+pts.join('L')+'"/>';
+    var mi=S.indexOf(Math.min.apply(null,S)), ma=S.indexOf(Math.max.apply(null,S));
+    [mi,ma].forEach(function(e){
+      var lbl=fmtDay(addDays({y:a.y,m:0,d:1},e),{day:'numeric',month:'short'});
+      s+='<circle class="ydot" cx="'+X(e).toFixed(1)+'" cy="'+Y(S[e]).toFixed(1)+'" r="3.5"/>';
+      if(W>=420){var ty=e===ma?Y(S[e])+17:Y(S[e])-9;s+='<text class="axt" x="'+X(e).toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="middle">'+lbl+'</text>'}
+    });
+    var idx=Math.round((Date.UTC(a.y,a.m,a.d)-Date.UTC(a.y,0,1))/864e5), info=dayInfo(a);
+    var t=todayYMD();
+    if(t.y===a.y){var ti=Math.round((Date.UTC(t.y,t.m,t.d)-Date.UTC(t.y,0,1))/864e5);s+='<circle class="hol" cx="'+X(ti).toFixed(1)+'" cy="'+Y(S[ti]).toFixed(1)+'" r="5"/>'}
+    s+='<line class="sel" x1="'+X(idx).toFixed(1)+'" x2="'+X(idx).toFixed(1)+'" y1="'+(m.t-4)+'" y2="'+(m.t+ih)+'"/><circle class="dot" cx="'+X(idx).toFixed(1)+'" cy="'+Y(S[idx]).toFixed(1)+'" r="6.5"/>';
+    s+=pill(X(idx),2,(info.len==null?'—':fmtHM(info.len)),W,m,'pillI');
+    yearGeom={l:m.l,iw:iw,n:n,y:a.y};
+    box.innerHTML='<svg role="img" aria-label="Durée du jour au fil de l’année, de '+lo+' à '+hi+' heures" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+s+'</svg>';
+    var r=$('#yearRange');r.max=n-1;r.value=idx;
+  }
+
+  /* ---------- Rendu global ---------- */
+  function renderAll(){renderHero();renderSide();renderSun();renderFacts();renderAgenda();renderYear()}
+  function setSel(a){
+    sel=(key(a)===key(todayYMD()))?null:a;
+    renderAll();
+  }
+
+  /* ---------- Lieu ---------- */
+  var ps=$('#placeSel');
+  ps.innerHTML=PLACES.map(function(p){return '<option value="'+p.id+'">'+p.n+'</option>'}).join('')+'<option value="custom">Autre lieu…</option>';
+  ps.value=cfg.id==='custom'||PLACES.some(function(p){return p.id===cfg.id})?cfg.id:'lamballe';
+  function syncCustom(){
+    $('#custom').hidden=cfg.id!=='custom';
+    if(cfg.id==='custom'){$('#latIn').value=cfg.lat;$('#lonIn').value=cfg.lon}
+  }
+  syncCustom();
+  ps.addEventListener('change',function(){
+    var v=ps.value;
+    if(v==='custom'){var P=place();cfg={id:'custom',lat:cfg.lat||P.lat,lon:cfg.lon||P.lon}}
+    else cfg={id:v,lat:0,lon:0};
+    saveCfg();syncCustom();sel=null;lastTodayKey=key(todayYMD());renderAll();
+  });
+  ['#latIn','#lonIn'].forEach(function(id){
+    $(id).addEventListener('change',function(){
+      cfg.lat=parseFloat($('#latIn').value)||0;cfg.lon=parseFloat($('#lonIn').value)||0;
+      saveCfg();lastTodayKey=key(todayYMD());renderAll();
+    });
+  });
+
+  /* ---------- Navigation dans le temps ---------- */
+  $('#prevDay').addEventListener('click',function(){setSel(addDays(curYMD(),-1))});
+  $('#nextDay').addEventListener('click',function(){setSel(addDays(curYMD(),1))});
+  $('#todayBtn').addEventListener('click',function(){sel=null;renderAll()});
+  $('#yearRange').addEventListener('input',function(e){setSel(addDays({y:curYMD().y,m:0,d:1},+e.target.value))});
+  var yc=$('#yearChart'), drag=false;
+  function scrub(e){
+    if(!yearGeom)return;
+    var r=yc.getBoundingClientRect(), f=(e.clientX-r.left-yearGeom.l)/yearGeom.iw;
+    var i=Math.max(0,Math.min(yearGeom.n-1,Math.round(f*(yearGeom.n-1))));
+    setSel(addDays({y:yearGeom.y,m:0,d:1},i));
+  }
+  yc.addEventListener('pointerdown',function(e){drag=true;try{yc.setPointerCapture(e.pointerId)}catch(x){}scrub(e)});
+  yc.addEventListener('pointermove',function(e){if(drag)scrub(e)});
+  yc.addEventListener('pointerup',function(){drag=false});
+  yc.addEventListener('pointercancel',function(){drag=false});
+
+  /* ---------- Horloge vivante ---------- */
+  var ticks=0;
+  setInterval(function(){
+    var k=key(todayYMD());
+    if(k!==lastTodayKey){lastTodayKey=k;renderAll();return}
+    renderHero();
+    if(++ticks%30===0&&isToday()){renderSun();renderAgenda()}
+  },1000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){lastTodayKey=key(todayYMD());renderAll()}});
+  var rt=null;
+  function onResize(){clearTimeout(rt);rt=setTimeout(function(){renderSun();renderYear()},80)}
+  if(window.ResizeObserver){new ResizeObserver(onResize).observe($('.wrap'))}else{window.addEventListener('resize',onResize)}
+
+  /* ---------- Assistant IA (capacité « sample ») ---------- */
+  var AI={turns:[],busy:false,ctl:null,sample:null,tools:false};
+  var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var iso=function(a){return a.y+'-'+pad(a.m+1)+'-'+pad(a.d)};
+  function placeById(id){var p=PLACES.find(function(x){return x.id===id});return p?{n:p.n,lat:p.lat,lon:p.lon,tz:'Europe/Paris'}:null}
+  function parseDate(s){
+    var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||'').trim());
+    if(!m)throw new Error('Date attendue au format AAAA-MM-JJ');
+    var y=+m[1],mo=+m[2]-1,d=+m[3],t=new Date(Date.UTC(y,mo,d));
+    if(t.getUTCMonth()!==mo||t.getUTCDate()!==d)throw new Error('Date invalide');
+    return {y:y,m:mo,d:d};
+  }
+  function dayReport(a,P){
+    var i=dayInfo(a,P), T=function(x){return fmtT(x,P.tz)};
+    return {lieu:P.n,date:iso(a),jour:fmtDay(a,{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+      aube:T(i.dawn),lever:T(i.sunrise),midi_solaire:T(i.noon),hauteur_max_degres:Math.round(i.altNoon*10)/10,
+      coucher:T(i.sunset),fin_crepuscule_civil:T(i.dusk),debut_heure_doree_du_soir:T(i.goldPM),
+      duree_du_jour:i.len==null?null:fmtHM(i.len),duree_du_jour_minutes:i.len==null?null:Math.round(i.len/60000),
+      creneau_soleil_haut_pour_linge:i.laundry?T(i.laundry.a)+' - '+T(i.laundry.b):null};
+  }
+  function minOf(ms,tz){var s=fmtT(ms,tz).split(':');return (+s[0])*60+(+s[1])}
+  function searchDates(inp){
+    var P=inp.place?placeById(String(inp.place)):place();
+    if(!P)throw new Error('Lieu inconnu');
+    var what=String(inp.what), when=String(inp.when);
+    if(['sunrise','sunset','dawn','dusk','day_length_minutes'].indexOf(what)<0)throw new Error('what invalide');
+    if(when!=='after'&&when!=='before')throw new Error('when doit valoir after ou before');
+    var thr;
+    if(what==='day_length_minutes')thr=Number(inp.value);
+    else{var m=/^(\d{1,2}):(\d{2})$/.exec(String(inp.value));if(!m)throw new Error('value attendu au format HH:MM');thr=(+m[1])*60+(+m[2])}
+    if(!isFinite(thr))throw new Error('value invalide');
+    var from=inp.from?parseDate(inp.from):todayYMD();
+    var n=Math.max(1,Math.min(366,Math.round(Number(inp.days)||366)));
+    var first=null,last=null,count=0,i;
+    for(i=0;i<n;i++){
+      var d=addDays(from,i), info=dayInfo(d,P), v, shown;
+      if(what==='day_length_minutes'){if(info.len==null)continue;v=Math.round(info.len/60000);shown=fmtHM(info.len)}
+      else{
+        var ms={sunrise:info.sunrise,sunset:info.sunset,dawn:info.dawn,dusk:info.dusk}[what];
+        if(ms==null)continue;v=minOf(ms,P.tz);shown=fmtT(ms,P.tz);
+      }
+      if(when==='after'?v>thr:v<thr){count++;var rec={date:iso(d),valeur:shown};if(!first)first=rec;last=rec}
+    }
+    return {lieu:P.n,recherche:what+' '+when+' '+inp.value,a_partir_du:iso(from),jours_examines:n,jours_correspondants:count,premier_jour:first,dernier_jour:last};
+  }
+  function makeTools(){
+    var ids=PLACES.map(function(p){return p.id});
+    var say=function(t){$('#aiStatus').textContent=t};
+    var dateProp={type:'string',description:'Date au format AAAA-MM-JJ'};
+    return [
+      {name:'getSunDay',
+       description:'Renvoie les heures du soleil pour une date et un lieu : aube, lever, midi solaire, coucher, fin du crépuscule civil, début de l’heure dorée du soir, durée du jour, créneau pour le linge. Heures locales. À utiliser pour toute heure ou durée demandée.',
+       inputSchema:{type:'object',properties:{date:dateProp,place:{type:'string',enum:ids,description:'Optionnel : le lieu affiché par défaut'}},required:['date']},
+       execute:function(inp){say('Calcul du soleil pour le '+inp.date+'…');var P=inp.place?placeById(String(inp.place)):place();if(!P)throw new Error('Lieu inconnu');return dayReport(parseDate(inp.date),P)}},
+      {name:'searchDates',
+       description:'Cherche dans le calendrier les jours où un événement solaire passe avant ou après une heure, ou où la durée du jour passe sous ou au-dessus d’un seuil. Renvoie le nombre de jours correspondants, le premier et le dernier. Exemple : le coucher est après 18:00.',
+       inputSchema:{type:'object',properties:{
+         what:{type:'string',enum:['sunrise','sunset','dawn','dusk','day_length_minutes'],description:'sunrise lever, sunset coucher, dawn aube, dusk fin du crépuscule civil, day_length_minutes durée du jour en minutes'},
+         when:{type:'string',enum:['after','before'],description:'after : strictement plus tard (ou plus long) que value. before : plus tôt (ou plus court).'},
+         value:{type:'string',description:'HH:MM pour une heure, un nombre de minutes pour la durée du jour'},
+         from:{type:'string',description:'Date de départ AAAA-MM-JJ, aujourd’hui par défaut'},
+         days:{type:'number',description:'Nombre de jours à examiner, 366 au maximum, 366 par défaut'},
+         place:{type:'string',enum:ids}},required:['what','when','value']},
+       execute:function(inp){say('Recherche dans le calendrier…');return searchDates(inp)}},
+      {name:'showOnPage',
+       description:'Affiche un jour précis dans la page (horloge, courbe du soleil, agenda) pour la personne. À appeler après une réponse portant sur une date précise. Ne change pas le lieu.',
+       inputSchema:{type:'object',properties:{date:dateProp},required:['date']},
+       execute:function(inp){var a=parseDate(inp.date);say('Affichage du jour sur la page…');setSel(a);return 'La page affiche maintenant le '+fmtDay(a,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}},
+      {name:'setPlace',
+       description:'Change le lieu utilisé par la page. Lieux possibles : '+PLACES.map(function(p){return p.id+' ('+p.n+')'}).join(', ')+'. À n’utiliser que si la personne le demande.',
+       inputSchema:{type:'object',properties:{place:{type:'string',enum:ids}},required:['place']},
+       execute:function(inp){
+         var p=PLACES.find(function(x){return x.id===String(inp.place)});if(!p)throw new Error('Lieu inconnu');
+         say('Changement de lieu…');cfg={id:p.id,lat:0,lon:0};saveCfg();ps.value=p.id;syncCustom();renderAll();return 'Lieu changé : '+p.n;
+       }}
+    ];
+  }
+  function buildRules(){
+    var P=place(), t=todayYMD(), a=curYMD();
+    var hm=new Date().toLocaleTimeString('fr-FR',{timeZone:P.tz,hour:'2-digit',minute:'2-digit'});
+    var r='Tu es l’assistant de l’application « Sunset », qui calcule la position du soleil (lever, coucher, crépuscule, durée du jour). Tu aides la personne à organiser sa journée selon la lumière : sorties, vélo ou voiture, linge, photo, jardin, sport, sommeil, et à comprendre les saisons.\n'+
+      'Règles : réponds en français, en tutoyant, en quatre phrases au maximum sauf si on te demande plus de détails. Écris en texte brut, sans Markdown ni liste à puces. Ne donne jamais de mémoire une heure de lever, de coucher ou une durée du jour : prends-les dans les données ci-dessous'+(AI.tools?' ou appelle les outils (getSunDay, searchDates)':'')+'. Les heures sont celles du lieu. '+
+      (AI.tools?'Après une réponse sur une date précise, appelle showOnPage pour que la page affiche ce jour. N’appelle setPlace que si la personne demande un autre lieu. ':'Tu n’as pas d’outil : si une autre date que celles des données est demandée, dis que tu peux seulement la changer à la main avec les flèches de la page. ')+
+      'Si la question sort du sujet, réponds brièvement puis ramène vers la lumière. Si un calcul échoue, dis-le simplement.\n'+
+      'Contexte : nous sommes le '+fmtDay(t,{weekday:'long',day:'numeric',month:'long',year:'numeric'})+', il est '+hm+'. Lieu actuel : '+P.n+'. Jour affiché sur la page : '+iso(a)+'.\n'+
+      'Données d’aujourd’hui : '+JSON.stringify(dayReport(t,P))+'\n'+
+      'Données du jour affiché : '+JSON.stringify(dayReport(a,P));
+    return r;
+  }
+  var CHIPS=[
+    'Jusqu’à quelle heure puis-je sortir sans lampe demain ?',
+    'À partir de quand le soleil se couche-t-il après 18 h ?',
+    'Compare la durée du jour entre le 21 décembre et le 21 juin.',
+    'Quel est le meilleur créneau pour étendre le linge cette semaine ?',
+    'Affiche-moi le jour de Noël.'
+  ];
+  function renderChips(){
+    var el=$('#chips');
+    el.hidden=AI.turns.length>0;
+    el.innerHTML=CHIPS.map(function(c){return '<button type="button" class="chip" data-q="'+esc(c)+'">'+esc(c)+'</button>'}).join('');
+  }
+  function addMsg(cls,text){
+    var d=document.createElement('div');d.className='msg '+cls;d.textContent=text;
+    var c=$('#chat');c.appendChild(d);c.scrollTop=c.scrollHeight;return d;
+  }
+  function setBusy(b){
+    AI.busy=b;$('#aiSend').disabled=b;$('#aiStop').hidden=!b;
+    $('#aiReset').hidden=b||AI.turns.length===0;
+    if(!b)$('#aiStatus').textContent='';
+  }
+  var PERMA={not_granted:1,sampling_disabled:1,not_declared:1,capability_disabled:1,capability_removed:1};
+  function errCopy(code){
+    return {
+      not_granted:'Cette page n’a pas l’autorisation d’utiliser Claude. Les calculs du soleil restent disponibles.',
+      sampling_disabled:'Claude n’est pas disponible pour ce compte. Les calculs du soleil restent disponibles.',
+      rate_limited:'Trop de demandes pour le moment. Réessaie dans quelques instants.',
+      session_expired:'Ta session a expiré. Reconnecte-toi puis réessaie.',
+      refused:'Claude ne peut pas répondre à cette demande. Reformule-la.',
+      empty_completion:'Pas de réponse cette fois. Reformule ta question.',
+      prompt_too_large:'La conversation est devenue trop longue. Lance une nouvelle conversation.',
+      upstream_error:'La connexion a été interrompue. Réessaie.'
+    }[code]||'Une erreur est survenue. Réessaie.';
+  }
+  async function ask(q){
+    q=String(q||'').trim();
+    if(AI.busy||!AI.sample||!q)return;
+    setBusy(true);
+    AI.turns.push({role:'user',content:q});
+    renderChips();addMsg('u',q);
+    var bub=addMsg('a','Je calcule…');bub.classList.add('wait');
+    var ctl=new AbortController();AI.ctl=ctl;
+    try{
+      var hist=AI.turns.slice(-12);
+      while(hist.length&&hist[0].role!=='user')hist.shift();
+      var opts={signal:ctl.signal,modelTier:'quick',onText:function(u){bub.classList.remove('wait');bub.textContent=u.text;var c=$('#chat');c.scrollTop=c.scrollHeight}};
+      if(AI.tools)opts.tools=makeTools();else opts.cache=false;
+      var r=await AI.sample([{role:'user',content:buildRules()}].concat(hist),opts);
+      AI.turns.push({role:'assistant',content:r.text});
+      bub.classList.remove('wait');bub.textContent=r.text+(r.truncated?'\n(Réponse coupée : demande-moi plus court.)':'');
+    }catch(e){
+      AI.turns.pop();
+      var code=e&&e.code;
+      if(code==='cancelled'){
+        if(e.text){bub.classList.remove('wait');bub.textContent=e.text+' (interrompu)'}else bub.remove();
+      }else{
+        bub.classList.remove('wait');
+        bub.textContent=(e&&e.text?e.text+'\n':'')+errCopy(code);
+        if(PERMA[code]){$('#aiForm').hidden=true;$('#chips').hidden=true}
+      }
+    }finally{
+      AI.ctl=null;setBusy(false);renderChips();
+    }
+  }
+  $('#aiForm').addEventListener('submit',function(e){e.preventDefault();var i=$('#aiIn'),v=i.value;i.value='';ask(v)});
+  $('#chips').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-q]');if(b)ask(b.getAttribute('data-q'))});
+  $('#aiStop').addEventListener('click',function(){if(AI.ctl)AI.ctl.abort()});
+  $('#aiReset').addEventListener('click',function(){AI.turns=[];$('#chat').innerHTML='';$('#aiStatus').textContent='';renderChips();setBusy(false)});
+  (async function initAI(){
+    try{
+      if(!window.claude||!window.claude.use)return;
+      var s=await window.claude.use('sample');
+      if(!s)return;
+      AI.sample=s;
+      try{var l=await s.limits();AI.tools=!!(l&&l.tools)}catch(x){}
+      renderChips();$('#aiPanel').hidden=false;
+    }catch(x){}
+  })();
+
+  renderAll();
+})();
+</script>
+
+<script>
+  // Enregistrement PWA : le service worker permet la mise en cache de l'application.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (err) {
+        console.warn('Installation hors connexion indisponible :', err);
+      });
+    });
+  }
+</script>
+</body></html>
